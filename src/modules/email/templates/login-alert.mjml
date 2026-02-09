@@ -1,0 +1,33 @@
+<mj-text font-size="18px" font-weight="bold">
+  New Login Detected
+</mj-text>
+
+<mj-text>
+  Hi {{name}},
+</mj-text>
+
+<mj-text>
+  A new login to your account was detected:
+</mj-text>
+
+<mj-text>
+  <strong>Device:</strong> {{deviceName}}<br/>
+  <strong>Browser:</strong> {{userAgent}}<br/>
+  <strong>Time:</strong> {{lastLoginAt}}
+</mj-text>
+
+<mj-text>
+  If this was you, no action is required.
+</mj-text>
+
+<mj-text>
+  If not, we strongly recommend logging out of all devices:
+</mj-text>
+
+<mj-button background-color="#d93025" href="{{logoutUrl}}">
+  Logout All Devices
+</mj-button>
+
+<mj-text font-size="12px" color="#777">
+  This will immediately sign you out everywhere.
+</mj-text>

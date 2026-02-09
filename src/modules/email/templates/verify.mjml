@@ -1,0 +1,8 @@
+<mj-text>Hello {{name}},</mj-text>
+<mj-text>Please verify your email:</mj-text>
+
+<mj-button href="{{verifyUrl}}">
+  Verify Email
+</mj-button>
+
+<mj-text>This link expires in {{expiresIn}}</mj-text>

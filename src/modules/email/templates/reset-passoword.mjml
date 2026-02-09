@@ -1,0 +1,6 @@
+<mj-text>Hello {{name}},</mj-text>
+<mj-text>Reset your password:</mj-text>
+
+<mj-button href="{{resetUrl}}">
+  Reset Password
+</mj-button>

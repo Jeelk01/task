@@ -1,0 +1,5 @@
+<mj-text>You have been invited to {{workspaceName}}</mj-text>
+
+<mj-button href="{{inviteUrl}}">
+  Accept Invite
+</mj-button>
