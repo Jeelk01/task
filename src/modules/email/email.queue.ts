@@ -1,5 +1,5 @@
-import { BullModule } from '@nestjs/bullmq'
+import { BullModule } from '@nestjs/bullmq';
 
 export const EmailQueueModule = BullModule.registerQueue({
-     name: 'email'
-})
+  name: 'email',
+});

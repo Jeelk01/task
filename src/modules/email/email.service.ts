@@ -15,8 +15,8 @@ export class EmailService {
 
   constructor(
     private readonly config: ConfigService,
-    @InjectQueue('email') private readonly queue: Queue
-    , private readonly jwtService: JwtService
+    @InjectQueue('email') private readonly queue: Queue,
+    private readonly jwtService: JwtService,
   ) {
     this.transporter = nodemailer.createTransport({
       host: this.config.get<string>('mail.host'),
@@ -56,12 +56,16 @@ export class EmailService {
     name: string;
     expiresIn: string;
   }) {
-    this.logger.log(
-      `Queueing verification email to ${payload.email}...`,
-    );
+    this.logger.log(`Queueing verification email to ${payload.email}...`);
 
-    const verificationToken = this.jwtService.signVerificationToken({ userId: payload.userId, email: payload.email, type: TOKEN_TYPE.VERIFICATION_TOKEN })
-    console.log("Email verification Token: ", verificationToken);
+    const verificationToken = this.jwtService.signVerificationToken({
+      userId: payload.userId,
+      email: payload.email,
+      type: TOKEN_TYPE.VERIFICATION_TOKEN,
+    });
+
+    const appUrl =
+      this.config.get<string>('app.url') || 'http://172.31.192.1:8080';
 
     await this.queueEmail({
       to: payload.email.toLowerCase(),
@@ -69,26 +73,67 @@ export class EmailService {
       template: 'verify.mjml',
       context: {
         ...payload,
-        verifyUrl: `https://yourapp.com/verify/${verificationToken}`,
+        verifyUrl: `${appUrl}/verify?token=${verificationToken}`,
       },
     });
   }
 
   async sendLoginAlertMail(payload: {
-    userId: string,
-    email: string,
-    name: string,
-    device: Device,
-    token: string
+    userId: string;
+    email: string;
+    name: string;
+    device: Device;
+    token: string;
   }) {
+    const appUrl =
+      this.config.get<string>('app.url') || 'http://172.31.192.1:8080';
     await this.queueEmail({
       to: payload.email.toLocaleLowerCase(),
       subject: 'Login alert',
       template: 'login-alert.mjml',
       context: {
         ...payload,
-        logoutUrl: `http://yourapp.com/security/logout/${payload.token}`
-      }
-    })
+        logoutUrl: `${appUrl}/security/logout?token=${payload.token}`,
+      },
+    });
+  }
+
+  async sendWorkspaceInviteMail(payload: {
+    email: string;
+    workspaceName: string;
+    invitedBy: string;
+  }) {
+    await this.queueEmail({
+      to: payload.email.toLowerCase(),
+      subject: 'Workspace Invitation',
+      template: 'workspace-invite.mjml',
+      context: payload,
+    });
+  }
+
+  async sendProjectInviteMail(payload: {
+    email: string;
+    projectName: string;
+    invitedBy: string;
+  }) {
+    await this.queueEmail({
+      to: payload.email.toLowerCase(),
+      subject: 'Project Invitation',
+      template: 'project-invite.mjml',
+      context: payload,
+    });
+  }
+
+  async sendTaskAssignedMail(payload: {
+    email: string;
+    note: string;
+    assignedBy: string;
+  }) {
+    await this.queueEmail({
+      to: payload.email.toLowerCase(),
+      subject: 'New Task Assigned',
+      template: 'task-assigned.mjml',
+      context: payload,
+    });
   }
 }

@@ -29,7 +29,10 @@ export class EmailProcessor extends WorkerHost {
     const { to, subject, template, context } = job.data;
 
     try {
-      const templatesRoot = path.join(process.cwd(), 'src/modules/email/templates');
+      const templatesRoot = path.join(
+        process.cwd(),
+        'src/modules/email/templates',
+      );
 
       const layoutPath = path.join(templatesRoot, 'main.mjml');
       const bodyPath = path.join(templatesRoot, template);
@@ -48,5 +51,4 @@ export class EmailProcessor extends WorkerHost {
       throw err;
     }
   }
-
 }

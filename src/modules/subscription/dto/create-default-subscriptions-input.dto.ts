@@ -1,7 +1,7 @@
-import { Field, InputType, ID } from "@nestjs/graphql";
+import { Field, InputType, ID } from '@nestjs/graphql';
 
 @InputType()
 export class CreateDefaultSubscriptionsInput {
-     @Field(() => [ID])
-     userIds: string[];
+  @Field(() => [ID])
+  userIds: string[];
 }

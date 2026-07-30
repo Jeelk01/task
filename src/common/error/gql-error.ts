@@ -1,4 +1,4 @@
-import { GraphQLError } from 'graphql'
+import { GraphQLError } from 'graphql';
 
 export function gqlAuthError(message: string) {
   return new GraphQLError(message, {
@@ -6,7 +6,7 @@ export function gqlAuthError(message: string) {
       code: 'UNAUTHENTICATED',
       status: 401,
     },
-  })
+  });
 }
 
 export function gqlNotFoundError(message: string) {
@@ -15,7 +15,7 @@ export function gqlNotFoundError(message: string) {
       code: 'NOT_FOUND',
       status: 404,
     },
-  })
+  });
 }
 
 export function gqlBadRequestError(message: string) {
@@ -24,5 +24,5 @@ export function gqlBadRequestError(message: string) {
       code: 'BAD_REQUEST',
       status: 400,
     },
-  })
+  });
 }

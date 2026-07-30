@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { EventEmitterModule } from '@nestjs/event-emitter'
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import databaseConfig from 'config/database.config';
 import redisConfig from 'config/redis.config';
 import uploadConfig from 'config/upload.config';
@@ -9,6 +9,7 @@ import graphqlConfig from 'config/graphql.config';
 import mailConfig from 'config/mail.config';
 import jwtConfig from 'config/jwt.config';
 import hashConfig from 'config/hash.config';
+import appConfig from 'config/app.config';
 import { validationSchema } from 'config/validation';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -31,24 +32,39 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { GraphqlResponseInterceptor } from './common/interceptors/graphql-response.interceptor';
 import { GraphqlErrorInterceptor } from './common/interceptors/graphql-error.interceptor';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
+import { TaskModule } from './modules/task/task.module';
+import { AttachmentModule } from './modules/attachments/attachment.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { MeetingModule } from './modules/meeting/meeting.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
-
-
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, redisConfig, uploadConfig, graphqlConfig, mailConfig, jwtConfig, hashConfig],
+      load: [
+        databaseConfig,
+        redisConfig,
+        uploadConfig,
+        graphqlConfig,
+        mailConfig,
+        jwtConfig,
+        hashConfig,
+        appConfig,
+      ],
       validationSchema: validationSchema,
     }),
 
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || '127.0.0.1',
-        port: +(process.env.REDIS_PORT || 6379),
-        password: process.env.REDIS_PASSWORD || undefined,
-        tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
-      },
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get<string>('redis.host') || '127.0.0.1',
+          port: config.get<number>('redis.port') || 6379,
+          password: process.env.REDIS_PASSWORD || undefined,
+          tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+        },
+      }),
     }),
 
     GraphQLModule.forRootAsync({
@@ -82,15 +98,24 @@ import { WorkspaceModule } from './modules/workspace/workspace.module';
     MembershipModule,
     WorkspaceModule,
     SubscriptionModule,
-    ProjectModule
+    ProjectModule,
+    TaskModule,
+    AttachmentModule,
+    ChatModule,
+    MeetingModule,
+    NotificationModule,
   ],
-  providers: [AppService, AppResolver, {
-    provide: APP_INTERCEPTOR,
-    useClass: GraphqlResponseInterceptor
-  }, {
+  providers: [
+    AppService,
+    AppResolver,
+    {
       provide: APP_INTERCEPTOR,
-      useClass: GraphqlErrorInterceptor
-    }
+      useClass: GraphqlResponseInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: GraphqlErrorInterceptor,
+    },
   ],
 })
-export class AppModule { }
+export class AppModule {}

@@ -1,5 +1,10 @@
 // src/redis/redis.service.ts
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis, { Redis as RedisClient } from 'ioredis';
 
@@ -42,7 +47,6 @@ export class RedisService implements OnModuleDestroy {
     return this.client;
   }
 
-
   async onModuleDestroy() {
     await this.client.quit();
     this.logger.log('Redis connection closed');
@@ -50,13 +54,8 @@ export class RedisService implements OnModuleDestroy {
 
   // -------------- STRING HELPERS --------------
 
-  async set(
-    key: string,
-    value: any,
-    ttlSeconds?: number,
-  ): Promise<void> {
-    const str =
-      typeof value === 'string' ? value : JSON.stringify(value);
+  async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
+    const str = typeof value === 'string' ? value : JSON.stringify(value);
 
     ttlSeconds
       ? await this.client.set(key, str, 'EX', ttlSeconds)

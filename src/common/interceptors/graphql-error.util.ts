@@ -1,10 +1,10 @@
-import { GraphQLError } from 'graphql'
+import { GraphQLError } from 'graphql';
 
 export function gqlError(
   message: string,
   code: string,
   status?: number,
-  exception?: any
+  exception?: any,
 ) {
   return new GraphQLError(message, {
     extensions: {
@@ -12,5 +12,5 @@ export function gqlError(
       status,
       exception,
     },
-  })
+  });
 }

@@ -1,12 +1,14 @@
-import { registerEnumType } from "@nestjs/graphql";
+import { registerEnumType } from '@nestjs/graphql';
 
-export enum PROJECT_ROLE {
-     MANAGER = 'manager',
-     VIEWER = 'viewer',
-     ASSIGNEE = 'assign'
+export enum ProjectRole {
+  OWNER = 'owner',
+  ADMIN = 'admin',
+  MANAGER = 'manager',
+  MEMBER = 'member',
+  VIEWER = 'viewer',
 }
 
-registerEnumType(PROJECT_ROLE, {
-     name: 'PROJECT_ROLE',
-     description: 'Describe the role of user for project.'
-})
+registerEnumType(ProjectRole, {
+  name: 'ProjectRole',
+  description: 'Describe the role of user for project.',
+});

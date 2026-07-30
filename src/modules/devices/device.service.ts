@@ -1,21 +1,23 @@
-import { Injectable } from "@nestjs/common"
-import { InjectModel } from "@nestjs/mongoose"
-import { Model, Types } from "mongoose"
-import { Device } from "./entities/device.entity"
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Device } from './entities/device.entity';
 import {
   gqlBadRequestError,
   gqlNotFoundError,
-} from "src/common/error/gql-error"
+} from 'src/common/error/gql-error';
 
 @Injectable()
 export class DeviceService {
   constructor(
     @InjectModel(Device.name)
-    private readonly deviceModel: Model<Device>
+    private readonly deviceModel: Model<Device>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findByDeviceId(deviceId: string) {
-    return this.deviceModel.findOne({ deviceId }).lean()
+    return this.deviceModel.findOne({ deviceId }).lean();
   }
 
   async findActiveDevices(userId: string) {
@@ -26,25 +28,25 @@ export class DeviceService {
         isBlocked: false,
       })
       .sort({ lastLoginAt: -1 })
-      .lean()
+      .lean();
   }
 
   async findAllDevices(userId: string) {
     return this.deviceModel
       .find({ userId: new Types.ObjectId(userId) })
       .sort({ lastLoginAt: -1 })
-      .lean()
+      .lean();
   }
 
   async upsertDeviceSession(params: {
-    userId: string
-    deviceId: string
-    deviceName?: string
-    userAgent?: string
-    ip?: string
-    refreshTokenHash: string
-    jti: string
-    expiresAt: Date
+    userId: string;
+    deviceId: string;
+    deviceName?: string;
+    userAgent?: string;
+    ip?: string;
+    refreshTokenHash: string;
+    jti: string;
+    expiresAt: Date;
   }) {
     const {
       userId,
@@ -55,7 +57,7 @@ export class DeviceService {
       refreshTokenHash,
       jti,
       expiresAt,
-    } = params
+    } = params;
 
     return this.deviceModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId), deviceId },
@@ -72,13 +74,17 @@ export class DeviceService {
         isRevoked: false,
         isBlocked: false,
       },
-      { upsert: true, new: true }
-    )
+      { upsert: true, new: true },
+    );
   }
 
-  async logoutDevice(userId: string, deviceId: string) {
+  async logoutDevice(
+    userId: string,
+    deviceId: string,
+    reason: string | null = null,
+  ) {
     if (!Types.ObjectId.isValid(userId)) {
-      throw gqlBadRequestError("Invalid userId")
+      throw gqlBadRequestError('Invalid userId');
     }
 
     const device = await this.deviceModel
@@ -87,16 +93,18 @@ export class DeviceService {
           userId: new Types.ObjectId(userId),
           deviceId,
         },
-        { $set: { isRevoked: true } },
-        { new: true }
+        { $set: { isRevoked: true, revocationReason: reason } },
+        { new: true },
       )
-      .lean()
+      .lean();
 
     if (!device) {
-      throw gqlNotFoundError("Active device session not found")
+      throw gqlNotFoundError('Active device session not found');
     }
 
-    return device
+    this.eventEmitter.emit('device.logout', { deviceId });
+
+    return device;
   }
 
   async blockDevice(userId: string, deviceId: string) {
@@ -104,15 +112,17 @@ export class DeviceService {
       .findOneAndUpdate(
         { userId: new Types.ObjectId(userId), deviceId },
         { $set: { isBlocked: true, isRevoked: true } },
-        { new: true }
+        { new: true },
       )
-      .lean()
+      .lean();
 
     if (!device) {
-      throw gqlNotFoundError("Device not found")
+      throw gqlNotFoundError('Device not found');
     }
 
-    return device
+    this.eventEmitter.emit('device.logout', { deviceId });
+
+    return device;
   }
 
   async unblockDevice(userId: string, deviceId: string) {
@@ -120,44 +130,55 @@ export class DeviceService {
       .findOneAndUpdate(
         { userId: new Types.ObjectId(userId), deviceId },
         { $set: { isBlocked: false } },
-        { new: true }
+        { new: true },
       )
-      .lean()
+      .lean();
 
     if (!device) {
-      throw gqlNotFoundError("Device not found")
+      throw gqlNotFoundError('Device not found');
     }
 
-    return device
+    return device;
   }
 
-  async logoutAllExcept(userId: string, excludeDeviceId: string) {
+  async logoutAllExcept(
+    userId: string,
+    excludeDeviceId: string,
+    reason: string = 'Logged out from another device',
+  ) {
     await this.deviceModel.updateMany(
       {
         userId: new Types.ObjectId(userId),
         deviceId: { $ne: excludeDeviceId },
         isBlocked: false,
       },
-      { $set: { isRevoked: true } }
-    )
+      { $set: { isRevoked: true, revocationReason: reason } },
+    );
 
-    return true
+    this.eventEmitter.emit('device.logoutAllExcept', {
+      userId,
+      exceptDeviceId: excludeDeviceId,
+    });
+
+    return true;
   }
 
   async logoutAllDevices(userId: string) {
     await this.deviceModel.updateMany(
       { userId: new Types.ObjectId(userId) },
-      { $set: { isRevoked: true } }
-    )
+      { $set: { isRevoked: true } },
+    );
 
-    return true
+    this.eventEmitter.emit('device.logoutAll', { userId });
+
+    return true;
   }
 
   async deleteRevokedDevices(userId: string) {
     return this.deviceModel.deleteMany({
       userId: new Types.ObjectId(userId),
       isRevoked: true,
-    })
+    });
   }
 
   async validateDeviceSession(userId: string, deviceId: string, jti: string) {
@@ -167,6 +188,6 @@ export class DeviceService {
       jti,
       isRevoked: false,
       isBlocked: false,
-    })
+    });
   }
 }

@@ -8,16 +8,8 @@ import { EmailListeners } from './listeners/email.listener';
 import { NotificationPreferenceModule } from '../notification-preference/notification-preference.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    EmailQueueModule,
-    NotificationPreferenceModule
-  ],
-  providers: [
-    EmailService,
-    EmailProcessor,
-    EmailListeners,
-  ],
+  imports: [ConfigModule, EmailQueueModule, NotificationPreferenceModule],
+  providers: [EmailService, EmailProcessor, EmailListeners],
   exports: [EmailService],
 })
-export class MailModule { }
+export class MailModule {}

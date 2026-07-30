@@ -1,13 +1,13 @@
-import { Field, Int, ObjectType } from "@nestjs/graphql";
+import { Field, Int, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
 export abstract class BaseResponse {
-     @Field(() => Int)
-     code: number
+  @Field(() => Int)
+  code: number;
 
-     @Field(() => String)
-     message: string
+  @Field(() => String)
+  message: string;
 
-     @Field(() => Boolean)
-     success: boolean
+  @Field(() => Boolean)
+  success: boolean;
 }

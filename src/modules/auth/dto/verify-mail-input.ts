@@ -1,7 +1,7 @@
-import { Field, InputType } from "@nestjs/graphql";
+import { Field, InputType } from '@nestjs/graphql';
 
 @InputType()
 export class VerifyEmailInput {
-     @Field(() => String, { description: 'email verification token' })
-     token: string;
+  @Field(() => String, { description: 'email verification token' })
+  token: string;
 }
