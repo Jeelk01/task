@@ -40,6 +40,7 @@ export const validationSchema = JOI.object({
      MAIL_USER: JOI.string().allow(''),
      MAIL_PASS: JOI.string().allow(''),
      MAIL_FROM: JOI.string().required(),
+     BREVO_API_KEY: JOI.string().allow(''),
 
      // Upload
      UPLOAD_DIR: JOI.string().default('./uploads'),

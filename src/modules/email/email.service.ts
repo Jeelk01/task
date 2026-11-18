@@ -30,10 +30,58 @@ export class EmailService {
   }
 
   async sendNow(options: nodemailer.SendMailOptions) {
+    const brevoApiKey = this.config.get<string>('mail.brevoApiKey');
+    if (brevoApiKey) {
+      return this.sendViaBrevo(brevoApiKey, options);
+    }
+
     return this.transporter.sendMail({
       from: this.config.get<string>('mail.from'),
       ...options,
     });
+  }
+
+  // Brevo's HTTP API — used in production because Render's free tier blocks SMTP ports
+  private async sendViaBrevo(
+    apiKey: string,
+    options: nodemailer.SendMailOptions,
+  ) {
+    const sender = this.parseAddress(
+      (options.from as string) || this.config.get<string>('mail.from') || '',
+    );
+    const to = (Array.isArray(options.to) ? options.to : [options.to])
+      .filter(Boolean)
+      .map((addr) => this.parseAddress(String(addr)));
+
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        sender,
+        to,
+        subject: options.subject,
+        htmlContent: options.html,
+        textContent: options.text,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Brevo send failed (${res.status}): ${await res.text()}`);
+    }
+    return res.json();
+  }
+
+  // "Structo <me@gmail.com>" -> { name: 'Structo', email: 'me@gmail.com' }
+  private parseAddress(value: string): { name?: string; email: string } {
+    const cleaned = value.trim().replace(/^['"]|['"]$/g, '');
+    const match = cleaned.match(/^(.*)<(.+)>$/);
+    if (!match) return { email: cleaned };
+    const name = match[1].trim().replace(/^['"]|['"]$/g, '');
+    return name ? { name, email: match[2].trim() } : { email: match[2].trim() };
   }
 
   async queueEmail(job: {
