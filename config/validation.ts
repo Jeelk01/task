@@ -45,4 +45,13 @@ export const validationSchema = JOI.object({
      UPLOAD_DIR: JOI.string().default('./uploads'),
      UPLOAD_MAX_FILE_SIZE: JOI.number().default(10 * 1024 * 1024), // 10 MB
 
+     // Cloudinary
+     CLOUDINARY_CLOUD_NAME: JOI.string().required(),
+     CLOUDINARY_API_KEY: JOI.string().required(),
+     CLOUDINARY_API_SECRET: JOI.string().required(),
+     CLOUDINARY_FOLDER: JOI.string().default('structo'),
+
+     // CORS
+     CORS_ORIGIN: JOI.string().default('http://localhost:8080'),
+
 });

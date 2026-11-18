@@ -1,19 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { randomUUID } from 'crypto';
 
 @Injectable()
 export class UploadService {
-  private readonly uploadDir: string;
+  private readonly folder: string;
 
   constructor(private readonly config: ConfigService) {
-    this.uploadDir = this.config.get<string>('upload.dir') ?? 'uploads';
-
-    if (!existsSync(this.uploadDir)) {
-      mkdirSync(this.uploadDir, { recursive: true });
-    }
+    cloudinary.config({
+      cloud_name: this.config.get<string>('cloudinary.cloudName'),
+      api_key: this.config.get<string>('cloudinary.apiKey'),
+      api_secret: this.config.get<string>('cloudinary.apiSecret'),
+      secure: true,
+    });
+    this.folder = this.config.get<string>('cloudinary.folder') ?? 'structo';
   }
 
   async saveFile(file: any) {
@@ -31,30 +32,32 @@ export class UploadService {
     }
 
     const storedName = `${randomUUID()}-${filename}`;
-    const fullPath = join(this.uploadDir, storedName);
 
-    return new Promise<{
-      filename: string;
-      mimetype: string;
-      encoding: string;
-      path: string;
-      url: string;
-    }>((resolve, reject) => {
-      const stream = createReadStream();
-      const out = createWriteStream(fullPath);
+    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+      const upload = cloudinary.uploader.upload_stream(
+        {
+          folder: this.folder,
+          public_id: storedName,
+          // 'raw' keeps PDFs/Office docs downloadable as-is
+          resource_type: mimetype.startsWith('image/') ? 'image' : 'raw',
+        },
+        (error, res) => (error || !res ? reject(error) : resolve(res)),
+      );
+      createReadStream().on('error', reject).pipe(upload);
+    });
 
-      stream
-        .pipe(out)
-        .on('finish', () =>
-          resolve({
-            filename: storedName,
-            mimetype,
-            encoding,
-            path: fullPath,
-            url: `/uploads/${storedName}`,
-          }),
-        )
-        .on('error', reject);
+    return {
+      filename: storedName,
+      mimetype,
+      encoding,
+      path: result.public_id,
+      url: result.secure_url,
+    };
+  }
+
+  async deleteFile(publicId: string, mimetype: string) {
+    await cloudinary.uploader.destroy(publicId, {
+      resource_type: mimetype.startsWith('image/') ? 'image' : 'raw',
     });
   }
 }

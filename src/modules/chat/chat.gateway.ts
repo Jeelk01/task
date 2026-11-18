@@ -23,7 +23,10 @@ import { WsJwtGuard } from './guards/ws-jwt.guard';
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: '*',
+    origin:
+      (process.env.CORS_ORIGIN || '*') === '*'
+        ? true
+        : process.env.CORS_ORIGIN!.split(',').map((o) => o.trim()),
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {

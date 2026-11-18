@@ -16,7 +16,10 @@ import { MeetingStatus } from './entities/meeting.entity';
 @WebSocketGateway({
   namespace: 'meeting',
   cors: {
-    origin: '*',
+    origin:
+      (process.env.CORS_ORIGIN || '*') === '*'
+        ? true
+        : process.env.CORS_ORIGIN!.split(',').map((o) => o.trim()),
   },
 })
 export class MeetingGateway

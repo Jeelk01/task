@@ -25,9 +25,13 @@ async function bootstrap() {
   );
 
   // Fix 8: CORS origin from environment variable
-  // const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+  // Comma-separated list, e.g. "https://structo.vercel.app,http://localhost:8080"
+  const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:8080')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: '*', // Allow all origins for development; restrict in production
+    origin: corsOrigins.includes('*') ? true : corsOrigins,
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
